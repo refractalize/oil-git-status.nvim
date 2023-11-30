@@ -13,7 +13,10 @@ local function set_filename_status_code(filename, index_status_code, working_sta
     filename = filename:sub(1, dir_index - 1)
 
     if not status[filename] then
-      status[filename] = { index_status_code, working_status_code }
+      status[filename] = {
+        index = index_status_code,
+        working_tree = working_status_code,
+      }
     else
       if index_status_code ~= " " then
         status[filename].index = "M"
@@ -23,7 +26,10 @@ local function set_filename_status_code(filename, index_status_code, working_sta
       end
     end
   else
-    status[filename] = { index = index_status_code, working_tree = working_status_code }
+    status[filename] = {
+      index = index_status_code,
+      working_tree = working_status_code,
+    }
   end
 end
 
