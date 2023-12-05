@@ -6,6 +6,16 @@ Add Git Status to [oil.nvim](https://github.com/stevearc/oil.nvim) directory lis
 
 ## Configuration
 
+Change the `oil` configuration to allow at least 2 sign columns:
+
+```lua
+require("oil").setup({
+  win_options = {
+    signcolumn = "yes:2",
+  },
+})
+```
+
 ### Lazy
 
 ```lua
@@ -20,14 +30,20 @@ Add Git Status to [oil.nvim](https://github.com/stevearc/oil.nvim) directory lis
 },
 ```
 
-Change the `oil` configuration to allow at least 2 sign columns:
+### Packer
 
 ```lua
-require("oil").setup({
-  win_options = {
-    signcolumn = "yes:2",
+use {
+  'refractalize/oil-git-status.nvim',
+
+  requires = { 
+    "stevearc/oil.nvim",
   },
-})
+
+  config = function()
+    require("oil-git-status").setup()
+  end,
+}
 ```
 
 ### Default Config
