@@ -143,8 +143,22 @@ local function load_git_status(buffer, callback)
   end)
 end
 
+local function validate_oil_config()
+  local oil_config = require("oil.config")
+  local signcolumn = oil_config.win_options.signcolumn
+  if not (vim.startswith(signcolumn, "yes") or vim.startswith(signcolumn, "auto")) then
+    vim.notify(
+      "oil-git-status requires win_options.signcolumn to be set to at least 'yes:2' or 'auto:2'",
+      vim.log.levels.WARN
+    )
+  end
+end
+
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
+
+  validate_oil_config()
+
   vim.api.nvim_create_autocmd({ "FileType" }, {
     pattern = { "oil" },
 

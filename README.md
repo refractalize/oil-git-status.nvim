@@ -36,8 +36,8 @@ require("oil").setup({
 use {
   'refractalize/oil-git-status.nvim',
 
-  requires = { 
-    "stevearc/oil.nvim",
+  after = { 
+    "oil.nvim",
   },
 
   config = function()
