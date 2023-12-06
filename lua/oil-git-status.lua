@@ -1,5 +1,6 @@
 local oil = require("oil")
 local namespace = vim.api.nvim_create_namespace("oil-git-status")
+local system = require("oil-git-status.system").system
 
 local default_config = {
   show_ignored = true,
@@ -106,21 +107,21 @@ local function load_git_status(buffer, callback)
   local path = vim.uri_to_fname(file_url)
   concurrent({
     function(cb)
-      vim.system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true, cwd = path }, cb)
+      system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true, cwd = path }, cb)
     end,
     function(cb)
-      vim.system({ "git", "-c", "status.relativePaths=true", "st", ".", "--short" }, { text = true, cwd = path }, cb)
+      system({ "git", "-c", "status.relativePaths=true", "st", ".", "--short" }, { text = true, cwd = path }, cb)
     end,
     function(cb)
       if current_config.show_ignored then
-        vim.system({ "git", "ls-tree", "HEAD", ".", "--name-only" }, { text = true, cwd = path }, cb)
+        system({ "git", "ls-tree", "HEAD", ".", "--name-only" }, { text = true, cwd = path }, cb)
       else
         cb({ code = 0, stdout = "" })
       end
     end,
   }, function(results)
     vim.schedule(function()
-      local in_git_dir_results = results[2]
+      local in_git_dir_results = results[1]
       local git_status_results = results[2]
       local git_fs_tree_results = results[3]
 
