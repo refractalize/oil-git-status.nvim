@@ -110,7 +110,7 @@ local function load_git_status(buffer, callback)
       system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true, cwd = path }, cb)
     end,
     function(cb)
-      system({ "git", "-c", "status.relativePaths=true", "st", ".", "--short" }, { text = true, cwd = path }, cb)
+      system({ "git", "-c", "status.relativePaths=true", "status", ".", "--short" }, { text = true, cwd = path }, cb)
     end,
     function(cb)
       if current_config.show_ignored then
