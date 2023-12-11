@@ -101,6 +101,12 @@ local function concurrent(fns, callback)
   end
 end
 
+local function notify_system_error(message, results)
+  vim.notify(message .. " (" .. results.code .. "):\n" .. (results.stderr or results.stdout or ""), vim.log.levels.ERROR, {
+    title = "oil-git-status",
+  })
+end
+
 local function load_git_status(buffer, callback)
   local oil_url = vim.api.nvim_buf_get_name(buffer)
   local file_url = oil_url:gsub("^oil", "file")
@@ -130,12 +136,12 @@ local function load_git_status(buffer, callback)
       end
 
       if git_status_results.code ~= 0 then
-        vim.notify("Failed to load git status", vim.log.levels.ERROR)
+        notify_system_error("Failed to load git status", git_status_results)
         return callback()
       end
 
       if git_fs_tree_results.code ~= 0 then
-        vim.notify("Failed to load git fs-tree", vim.log.levels.ERROR)
+        notify_system_error("Failed to load git fs-tree", git_fs_tree_results)
         return callback()
       end
 
@@ -150,7 +156,10 @@ local function validate_oil_config()
   if not (vim.startswith(signcolumn, "yes") or vim.startswith(signcolumn, "auto")) then
     vim.notify(
       "oil-git-status requires win_options.signcolumn to be set to at least 'yes:2' or 'auto:2'",
-      vim.log.levels.WARN
+      vim.log.levels.WARN,
+      {
+        title = "oil-git-status",
+      }
     )
   end
 end
