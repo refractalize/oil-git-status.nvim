@@ -20,7 +20,7 @@ require("oil").setup({
 
 ```lua
 {
-  "refractalize/oil-git-status",
+  "refractalize/oil-git-status.nvim",
 
   dependencies = {
     "stevearc/oil.nvim",
