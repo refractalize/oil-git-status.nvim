@@ -58,6 +58,25 @@ local function parse_git_status(git_status_stdout, git_fs_tree_stdout)
   return status
 end
 
+local highlight_group_suffix_for_status_code = {
+  ["!"] = "Ignored",
+  ["?"] = "Untracked",
+  ["A"] = "Added",
+  ["C"] = "Copied",
+  ["D"] = "Deleted",
+  ["M"] = "Modified",
+  ["R"] = "Renamed",
+  ["T"] = "TypeChanged",
+  ["U"] = "Unmerged",
+  [" "] = "Unmodified",
+}
+
+local function highlight_group(code, index)
+  local location = index and "Index" or "WorkingTree"
+
+  return "OilGitStatus" .. location .. (highlight_group_suffix_for_status_code[code] or "Unmodified")
+end
+
 local function add_status_extmarks(buffer, status)
   vim.api.nvim_buf_clear_namespace(buffer, namespace, 0, -1)
 
@@ -71,12 +90,12 @@ local function add_status_extmarks(buffer, status)
         if status_codes then
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
             sign_text = status_codes.index,
-            sign_hl_group = "DiagnosticSignInfo",
+            sign_hl_group = highlight_group(status_codes.index, true),
             priority = 1,
           })
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
             sign_text = status_codes.working_tree,
-            sign_hl_group = "DiagnosticSignWarn",
+            sign_hl_group = highlight_group(status_codes.working_tree, false),
             priority = 2,
           })
         end
@@ -164,6 +183,23 @@ local function validate_oil_config()
   end
 end
 
+local function generate_highlight_groups()
+  local highlight_groups = {}
+  for status_code, suffix in pairs(highlight_group_suffix_for_status_code) do
+    table.insert(
+      highlight_groups,
+      { hl_group = "OilGitStatusIndex" .. suffix, index = true, status_code = status_code }
+    )
+    table.insert(
+      highlight_groups,
+      { hl_group = "OilGitStatusWorkingTree" .. suffix, index = false, status_code = status_code }
+    )
+  end
+  return highlight_groups
+end
+
+local highlight_groups = generate_highlight_groups()
+
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
 
@@ -204,8 +240,17 @@ local function setup(config)
       })
     end,
   })
+
+  for _, hl_group in ipairs(highlight_groups) do
+    if hl_group.index then
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignInfo" })
+    else
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignWarn" })
+    end
+  end
 end
 
 return {
   setup = setup,
+  highlight_groups = highlight_groups,
 }

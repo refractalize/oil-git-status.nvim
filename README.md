@@ -36,7 +36,7 @@ require("oil").setup({
 use {
   'refractalize/oil-git-status.nvim',
 
-  after = { 
+  after = {
     "oil.nvim",
   },
 
@@ -53,3 +53,22 @@ require('oil-git-status').setup({
     show_ignored = true -- show files that match gitignore with !!
 })
 ```
+
+## Highlight Groups
+
+The following highlight groups are defined:
+
+| Status Code | In Index                       | In Working Tree                      |
+|-------------|--------------------------------|--------------------------------------|
+| ` `         | `OilGitStatusIndexUnmodified`  | `OilGitStatusWorkingTreeUnmodified`  |
+| `!`         | `OilGitStatusIndexIgnored`     | `OilGitStatusWorkingTreeIgnored`     |
+| `?`         | `OilGitStatusIndexUntracked`   | `OilGitStatusWorkingTreeUntracked`   |
+| `A`         | `OilGitStatusIndexAdded`       | `OilGitStatusWorkingTreeAdded`       |
+| `C`         | `OilGitStatusIndexCopied`      | `OilGitStatusWorkingTreeCopied`      |
+| `D`         | `OilGitStatusIndexDeleted`     | `OilGitStatusWorkingTreeDeleted`     |
+| `M`         | `OilGitStatusIndexModified`    | `OilGitStatusWorkingTreeModified`    |
+| `R`         | `OilGitStatusIndexRenamed`     | `OilGitStatusWorkingTreeRenamed`     |
+| `T`         | `OilGitStatusIndexTypeChanged` | `OilGitStatusWorkingTreeTypeChanged` |
+| `U`         | `OilGitStatusIndexUnmerged`    | `OilGitStatusWorkingTreeUnmerged`    |
+
+You can access these programmatically through the `require('oil-git-status').highlight_groups` field.
