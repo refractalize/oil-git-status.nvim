@@ -34,7 +34,7 @@ local function set_filename_status_code(filename, index_status_code, working_sta
   end
 end
 
-local function parse_git_status(git_status_stdout, git_fs_tree_stdout)
+local function parse_git_status(git_status_stdout, git_ls_tree_stdout)
   local status_lines = vim.split(git_status_stdout, "\n")
   local status = {}
   for _, line in ipairs(status_lines) do
@@ -49,7 +49,7 @@ local function parse_git_status(git_status_stdout, git_fs_tree_stdout)
     set_filename_status_code(filename, index_status_code, working_status_code, status)
   end
 
-  for _, filename in ipairs(vim.split(git_fs_tree_stdout, "\n")) do
+  for _, filename in ipairs(vim.split(git_ls_tree_stdout, "\n")) do
     if not status[filename] then
       status[filename] = { index = " ", working_tree = " " }
     end
@@ -132,9 +132,6 @@ local function load_git_status(buffer, callback)
   local path = vim.uri_to_fname(file_url)
   concurrent({
     function(cb)
-      system({ "git", "rev-parse", "--is-inside-work-tree" }, { text = true, cwd = path }, cb)
-    end,
-    function(cb)
       system({ "git", "-c", "status.relativePaths=true", "status", ".", "--short" }, { text = true, cwd = path }, cb)
     end,
     function(cb)
@@ -146,11 +143,10 @@ local function load_git_status(buffer, callback)
     end,
   }, function(results)
     vim.schedule(function()
-      local in_git_dir_results = results[1]
-      local git_status_results = results[2]
-      local git_fs_tree_results = results[3]
+      local git_status_results = results[1]
+      local git_ls_tree_results = results[2]
 
-      if in_git_dir_results.code ~= 0 then
+      if git_ls_tree_results.code ~= 0 then
         return callback()
       end
 
@@ -159,12 +155,7 @@ local function load_git_status(buffer, callback)
         return callback()
       end
 
-      if git_fs_tree_results.code ~= 0 then
-        notify_system_error("Failed to load git fs-tree", git_fs_tree_results)
-        return callback()
-      end
-
-      callback(parse_git_status(git_status_results.stdout, git_fs_tree_results.stdout))
+      callback(parse_git_status(git_status_results.stdout, git_ls_tree_results.stdout))
     end)
   end)
 end
