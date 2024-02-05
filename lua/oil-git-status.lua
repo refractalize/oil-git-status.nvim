@@ -189,8 +189,10 @@ local function generate_highlight_groups()
   return highlight_groups
 end
 
+--- @type table<string, {hl_group: string, index: boolean, status_code: string}>
 local highlight_groups = generate_highlight_groups()
 
+--- @param config {show_ignored: boolean}
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
 
@@ -234,9 +236,9 @@ local function setup(config)
 
   for _, hl_group in ipairs(highlight_groups) do
     if hl_group.index then
-      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignInfo" })
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignInfo", default = true })
     else
-      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignWarn" })
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignWarn", default = true })
     end
   end
 end

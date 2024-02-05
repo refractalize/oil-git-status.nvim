@@ -50,7 +50,7 @@ use {
 
 ```lua
 require('oil-git-status').setup({
-    show_ignored = true -- show files that match gitignore with !!
+  show_ignored = true -- show files that match gitignore with !!
 })
 ```
 
@@ -59,7 +59,7 @@ require('oil-git-status').setup({
 The following highlight groups are defined:
 
 | Status Code | In Index                       | In Working Tree                      |
-|-------------|--------------------------------|--------------------------------------|
+| ----------- | ------------------------------ | ------------------------------------ |
 | ` `         | `OilGitStatusIndexUnmodified`  | `OilGitStatusWorkingTreeUnmodified`  |
 | `!`         | `OilGitStatusIndexIgnored`     | `OilGitStatusWorkingTreeIgnored`     |
 | `?`         | `OilGitStatusIndexUntracked`   | `OilGitStatusWorkingTreeUntracked`   |
@@ -71,4 +71,14 @@ The following highlight groups are defined:
 | `T`         | `OilGitStatusIndexTypeChanged` | `OilGitStatusWorkingTreeTypeChanged` |
 | `U`         | `OilGitStatusIndexUnmerged`    | `OilGitStatusWorkingTreeUnmerged`    |
 
-You can access these programmatically through the `require('oil-git-status').highlight_groups` field.
+You can access these programmatically through the `require('oil-git-status').highlight_groups` field:
+
+```lua
+for _, hl_group in pairs(require('oil_git_status').highlight_groups) do
+  if hl_group.index then
+    vim.api.nvim_set_hl(0, hl_group.hl_group, { fg = "#ff0000" })
+  else
+    vim.api.nvim_set_hl(0, hl_group.hl_group, { fg = "#00ff00" })
+  end
+end
+```
