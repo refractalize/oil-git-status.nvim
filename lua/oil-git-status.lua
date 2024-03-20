@@ -120,12 +120,6 @@ local function concurrent(fns, callback)
   end
 end
 
-local function notify_system_error(message, results)
-  vim.notify(message .. " (" .. results.code .. "):\n" .. (results.stderr or results.stdout or ""), vim.log.levels.ERROR, {
-    title = "oil-git-status",
-  })
-end
-
 local function load_git_status(buffer, callback)
   local oil_url = vim.api.nvim_buf_get_name(buffer)
   local file_url = oil_url:gsub("^oil", "file")
