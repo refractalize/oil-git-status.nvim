@@ -74,7 +74,7 @@ The following highlight groups are defined:
 You can access these programmatically through the `require('oil-git-status').highlight_groups` field:
 
 ```lua
-for _, hl_group in pairs(require('oil_git_status').highlight_groups) do
+for _, hl_group in pairs(require("oil_git_status").highlight_groups) do
   if hl_group.index then
     vim.api.nvim_set_hl(0, hl_group.hl_group, { fg = "#ff0000" })
   else

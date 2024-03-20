@@ -146,12 +146,7 @@ local function load_git_status(buffer, callback)
       local git_status_results = results[1]
       local git_ls_tree_results = results[2]
 
-      if git_ls_tree_results.code ~= 0 then
-        return callback()
-      end
-
-      if git_status_results.code ~= 0 then
-        notify_system_error("Failed to load git status", git_status_results)
+      if git_ls_tree_results.code ~= 0 or git_status_results.code ~= 0 then
         return callback()
       end
 
