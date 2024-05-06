@@ -148,10 +148,15 @@ local function load_git_status(buffer, callback)
   end)
 end
 
-local function validate_oil_config()
+---@return boolean
+local function is_valid_oil_config()
   local oil_config = require("oil.config")
-  local signcolumn = oil_config.win_options.signcolumn
-  if not (vim.startswith(signcolumn, "yes") or vim.startswith(signcolumn, "auto")) then
+  local signcolumn = oil_config.win_options and oil_config.win_options.signcolumn
+  return signcolumn ~= nil and vim.startswith(signcolumn, "yes") or vim.startswith(signcolumn, "auto")
+end
+
+local function validate_oil_config()
+  if not is_valid_oil_config() then
     vim.notify(
       "oil-git-status requires win_options.signcolumn to be set to at least 'yes:2' or 'auto:2'",
       vim.log.levels.WARN,
@@ -213,6 +218,7 @@ end
 return {
   setup = setup,
   highlight_groups = highlight_groups,
+  is_valid_oil_config = is_valid_oil_config,
   validate_oil_config = validate_oil_config,
   set_highlights = set_highlights,
   update_git_status = update_git_status,
