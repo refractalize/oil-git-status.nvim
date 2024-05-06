@@ -1,4 +1,3 @@
-local oil = require("oil")
 local namespace = vim.api.nvim_create_namespace("oil-git-status")
 local system = require("oil-git-status.system").system
 
@@ -82,7 +81,7 @@ local function add_status_extmarks(buffer, status)
 
   if status then
     for n = 1, vim.api.nvim_buf_line_count(buffer) do
-      local entry = oil.get_entry_on_line(buffer, n)
+      local entry = require("oil").get_entry_on_line(buffer, n)
       if entry then
         local name = entry.name
         local status_codes = status[name] or (current_config.show_ignored and { index = "!", working_tree = "!" })
@@ -184,45 +183,9 @@ local highlight_groups = generate_highlight_groups()
 --- @param config {show_ignored: boolean}
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
+end
 
-  validate_oil_config()
-
-  vim.api.nvim_create_autocmd({ "FileType" }, {
-    pattern = { "oil" },
-
-    callback = function()
-      local buffer = vim.api.nvim_get_current_buf()
-      local current_status = nil
-
-      if vim.b[buffer].oil_git_status_started then
-        return
-      end
-
-      vim.b[buffer].oil_git_status_started = true
-
-      vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-        buffer = buffer,
-
-        callback = function()
-          load_git_status(buffer, function(status)
-            current_status = status
-            add_status_extmarks(buffer, current_status)
-          end)
-        end,
-      })
-
-      vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
-        buffer = buffer,
-
-        callback = function()
-          if current_status then
-            add_status_extmarks(buffer, current_status)
-          end
-        end,
-      })
-    end,
-  })
-
+local function set_highlights()
   for _, hl_group in ipairs(highlight_groups) do
     if hl_group.index then
       vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignInfo", default = true })
@@ -232,7 +195,26 @@ local function setup(config)
   end
 end
 
+---@param buffer integer
+local function update_git_status(buffer)
+  load_git_status(buffer, function(status)
+    current_status = status
+    add_status_extmarks(buffer, current_status)
+  end)
+end
+
+---@param buffer integer
+local function refresh(buffer)
+  if current_status then
+    add_status_extmarks(buffer, current_status)
+  end
+end
+
 return {
   setup = setup,
   highlight_groups = highlight_groups,
+  validate_oil_config = validate_oil_config,
+  set_highlights = set_highlights,
+  update_git_status = update_git_status,
+  refresh = refresh,
 }
