@@ -5,7 +5,7 @@ local default_config = {
   show_ignored = true,
 }
 
-local current_config = vim.tbl_extend("force", default_config, {})
+local current_config = vim.tbl_extend("force", default_config, vim.g.oil_git_status or {})
 
 local function set_filename_status_code(filename, index_status_code, working_status_code, status)
   local dir_index = filename:find("/")

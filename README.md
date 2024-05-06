@@ -46,6 +46,9 @@ require('oil-git-status').setup({
 })
 ```
 
+You can also configure this plugin by setting `vim.g.oil_git_status`
+instead of calling `setup`.
+
 > [!NOTE]
 >
 > You do not need to call `setup` if you are happy with the
