@@ -4,6 +4,32 @@ local system = require("oil-git-status.system").system
 
 local default_config = {
   show_ignored = true,
+	symbols = {
+		index = {
+			["!"] = "!",
+			["?"] = "?",
+			["A"] = "A",
+			["C"] = "C",
+			["D"] = "D",
+			["M"] = "M",
+			["R"] = "R",
+			["T"] = "T",
+			["U"] = "U",
+			[" "] = " ",
+		},
+		working_tree = {
+			["!"] = "!",
+			["?"] = "?",
+			["A"] = "A",
+			["C"] = "C",
+			["D"] = "D",
+			["M"] = "M",
+			["R"] = "R",
+			["T"] = "T",
+			["U"] = "U",
+			[" "] = " ",
+		},
+	},
 }
 
 local current_config = vim.tbl_extend("force", default_config, {})
@@ -89,12 +115,12 @@ local function add_status_extmarks(buffer, status)
 
         if status_codes then
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
-            sign_text = status_codes.index,
+            sign_text = current_config.symbols.index[status_codes.index],
             sign_hl_group = highlight_group(status_codes.index, true),
             priority = 1,
           })
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
-            sign_text = status_codes.working_tree,
+            sign_text = current_config.symbols.working_tree[status_codes.working_tree],
             sign_hl_group = highlight_group(status_codes.working_tree, false),
             priority = 2,
           })
