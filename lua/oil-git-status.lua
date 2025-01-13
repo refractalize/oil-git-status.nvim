@@ -91,8 +91,9 @@ local function add_status_extmarks(buffer, status)
   if status then
     for n = 1, vim.api.nvim_buf_line_count(buffer) do
       local entry = oil.get_entry_on_line(buffer, n)
-      if entry then
+      if entry and entry.name ~= '..' then
         local name = entry.name
+
         local status_codes = status[name] or (current_config.show_ignored and { index = "!", working_tree = "!" })
 
         if status_codes then
@@ -234,8 +235,8 @@ local function setup(config)
     end,
   })
 
-  vim.api.nvim_set_hl(0, 'OilGitStatusIndex', { link = 'DiagnosticSignInfo', default = true })
-  vim.api.nvim_set_hl(0, 'OilGitStatusWorkingTree', { link = 'DiagnosticSignWarn', default = true })
+  vim.api.nvim_set_hl(0, "OilGitStatusIndex", { link = "DiagnosticSignInfo", default = true })
+  vim.api.nvim_set_hl(0, "OilGitStatusWorkingTree", { link = "DiagnosticSignWarn", default = true })
 
   for _, hl_group in ipairs(highlight_groups) do
     if hl_group.index then
