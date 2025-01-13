@@ -4,32 +4,10 @@ local system = require("oil-git-status.system").system
 
 local default_config = {
   show_ignored = true,
-	symbols = {
-		index = {
-			["!"] = "!",
-			["?"] = "?",
-			["A"] = "A",
-			["C"] = "C",
-			["D"] = "D",
-			["M"] = "M",
-			["R"] = "R",
-			["T"] = "T",
-			["U"] = "U",
-			[" "] = " ",
-		},
-		working_tree = {
-			["!"] = "!",
-			["?"] = "?",
-			["A"] = "A",
-			["C"] = "C",
-			["D"] = "D",
-			["M"] = "M",
-			["R"] = "R",
-			["T"] = "T",
-			["U"] = "U",
-			[" "] = " ",
-		},
-	},
+  symbols = {
+    index = {},
+    working_tree = {},
+  },
 }
 
 local current_config = vim.tbl_extend("force", default_config, {})
@@ -103,6 +81,10 @@ local function highlight_group(code, index)
   return "OilGitStatus" .. location .. (highlight_group_suffix_for_status_code[code] or "Unmodified")
 end
 
+local function get_symbol(symbols, code)
+  return symbols[code] or code
+end
+
 local function add_status_extmarks(buffer, status)
   vim.api.nvim_buf_clear_namespace(buffer, namespace, 0, -1)
 
@@ -115,12 +97,12 @@ local function add_status_extmarks(buffer, status)
 
         if status_codes then
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
-            sign_text = current_config.symbols.index[status_codes.index],
+            sign_text = get_symbol(current_config.symbols.index, status_codes.index),
             sign_hl_group = highlight_group(status_codes.index, true),
             priority = 1,
           })
           vim.api.nvim_buf_set_extmark(buffer, namespace, n - 1, 0, {
-            sign_text = current_config.symbols.working_tree[status_codes.working_tree],
+            sign_text = get_symbol(current_config.symbols.working_tree, status_codes.working_tree),
             sign_hl_group = highlight_group(status_codes.working_tree, false),
             priority = 2,
           })
@@ -149,7 +131,9 @@ end
 local function load_git_status(buffer, callback)
   local oil_url = vim.api.nvim_buf_get_name(buffer)
   local file_url = oil_url:gsub("^oil", "file")
-  if vim.fn.has "win32" == 1 then file_url = file_url:gsub("file:///([A-Za-z])/", "file:///%1:/") end
+  if vim.fn.has("win32") == 1 then
+    file_url = file_url:gsub("file:///([A-Za-z])/", "file:///%1:/")
+  end
   local path = vim.uri_to_fname(file_url)
   concurrent({
     function(cb)
@@ -250,11 +234,14 @@ local function setup(config)
     end,
   })
 
+  vim.api.nvim_set_hl(0, 'OilGitStatusIndex', { link = 'DiagnosticSignInfo', default = true })
+  vim.api.nvim_set_hl(0, 'OilGitStatusWorkingTree', { link = 'DiagnosticSignWarn', default = true })
+
   for _, hl_group in ipairs(highlight_groups) do
     if hl_group.index then
-      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignInfo", default = true })
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "OilGitStatusIndex", default = true })
     else
-      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "DiagnosticSignWarn", default = true })
+      vim.api.nvim_set_hl(0, hl_group.hl_group, { link = "OilGitStatusWorkingTree", default = true })
     end
   end
 end
