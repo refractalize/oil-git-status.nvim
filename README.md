@@ -26,7 +26,7 @@ require("oil").setup({
     "stevearc/oil.nvim",
   },
 
-  config = true,
+  lazy = false, -- This plugin is already lazy.
 },
 ```
 
@@ -35,14 +35,6 @@ require("oil").setup({
 ```lua
 use {
   'refractalize/oil-git-status.nvim',
-
-  after = {
-    "oil.nvim",
-  },
-
-  config = function()
-    require("oil-git-status").setup()
-  end,
 }
 ```
 
@@ -79,6 +71,15 @@ require('oil-git-status').setup({
   },
 })
 ```
+
+You can also configure this plugin by setting `vim.g.oil_git_status`
+instead of calling `setup`.
+
+> [!NOTE]
+>
+> You do not need to call `setup` if you are happy with the
+> default config. This plugin will load automatically when
+> you open an oil buffer.
 
 ## Highlight Groups
 
