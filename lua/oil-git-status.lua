@@ -1,4 +1,7 @@
+local uv = vim.uv or vim.loop
+
 local oil = require("oil")
+local util = require("oil.util")
 local namespace = vim.api.nvim_create_namespace("oil-git-status")
 local system = require("oil-git-status.system").system
 
@@ -190,6 +193,42 @@ local function generate_highlight_groups()
   return highlight_groups
 end
 
+local session = {}
+local initialize_buffer = function(bufnr, callback)
+  if session[bufnr] == nil then
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local _, dir = util.parse_url(bufname)
+    local fs_event = assert(uv.new_fs_event())
+
+    vim.api.nvim_create_autocmd("BufUnload", {
+      group = "Oil",
+      nested = true,
+      once = true,
+      buffer = bufnr,
+      callback = function()
+        local local_fs_event = session[bufnr]
+        if local_fs_event then
+          local_fs_event:stop()
+        end
+
+        session[bufnr] = nil
+      end,
+    })
+
+    fs_event:start(
+      assert(dir),
+      {},
+      vim.schedule_wrap(function(err, filename, events)
+        load_git_status(bufnr, function(status)
+          callback(status)
+        end)
+      end)
+    )
+    session[bufnr] = fs_event
+  end
+end
+
+
 --- @type table<string, {hl_group: string, index: boolean, status_code: string}>
 local highlight_groups = generate_highlight_groups()
 
@@ -218,6 +257,10 @@ local function setup(config)
         callback = function()
           load_git_status(buffer, function(status)
             current_status = status
+            initialize_buffer(buffer, function(other_status)
+              current_status = other_status
+              add_status_extmarks(buffer, current_status)
+            end)
             add_status_extmarks(buffer, current_status)
           end)
         end,
