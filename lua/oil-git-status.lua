@@ -7,6 +7,7 @@ local system = require("oil-git-status.system").system
 
 local default_config = {
   show_ignored = true,
+  watch_for_changes = false,
   symbols = {
     index = {},
     working_tree = {},
@@ -194,7 +195,7 @@ local function generate_highlight_groups()
 end
 
 local session = {}
-local initialize_buffer = function(bufnr, callback)
+local watch_buffer_directory = function(bufnr, callback)
   if session[bufnr] == nil then
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     local _, dir = util.parse_url(bufname)
@@ -257,10 +258,12 @@ local function setup(config)
         callback = function()
           load_git_status(buffer, function(status)
             current_status = status
-            initialize_buffer(buffer, function(other_status)
-              current_status = other_status
-              add_status_extmarks(buffer, current_status)
-            end)
+            if current_config.watch_for_changes then
+              watch_buffer_directory(buffer, function(other_status)
+                current_status = other_status
+                add_status_extmarks(buffer, current_status)
+              end)
+            end
             add_status_extmarks(buffer, current_status)
           end)
         end,
