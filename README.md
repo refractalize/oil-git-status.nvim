@@ -51,6 +51,7 @@ use {
 ```lua
 require('oil-git-status').setup({
   show_ignored = true -- show files that match gitignore with !!
+  watch_for_changes = false, -- enable to update status on file system changes 
   symbols = { -- customize the symbols that appear in the git status columns
     index = {
       ["!"] = "!",
