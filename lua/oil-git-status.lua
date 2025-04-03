@@ -38,13 +38,21 @@ local function set_filename_status_code(filename, index_status_code, working_sta
   end
 end
 
+--- @param s string
+--- @return string
+local function unquote_git_file_name(s)
+  -- git-ls-tree and git-status show '\file".md' as `"\\file\".md"`.
+  local out, _ = s:gsub('"(.*)"', "%1"):gsub('\\"', '"'):gsub("\\\\", "\\")
+  return out
+end
+
 local function parse_git_status(git_status_stdout, git_ls_tree_stdout)
   local status_lines = vim.split(git_status_stdout, "\n")
   local status = {}
   for _, line in ipairs(status_lines) do
     local index_status_code = line:sub(1, 1)
     local working_status_code = line:sub(2, 2)
-    local filename = line:sub(4)
+    local filename = unquote_git_file_name(line:sub(4))
 
     if vim.endswith(filename, "/") then
       filename = filename:sub(1, -2)
@@ -54,6 +62,7 @@ local function parse_git_status(git_status_stdout, git_ls_tree_stdout)
   end
 
   for _, filename in ipairs(vim.split(git_ls_tree_stdout, "\n")) do
+    filename = unquote_git_file_name(filename)
     if not status[filename] then
       status[filename] = { index = " ", working_tree = " " }
     end
@@ -138,11 +147,21 @@ local function load_git_status(buffer, callback)
   local path = vim.uri_to_fname(file_url)
   concurrent({
     function(cb)
-      system({ "git", "-c", "status.relativePaths=true", "status", ".", "--short" }, { text = true, cwd = path }, cb)
+      -- quotepath=false - don't escape UTF-8 paths.
+      system(
+        { "git", "-c", "core.quotepath=false", "-c", "status.relativePaths=true", "status", ".", "--short" },
+        { text = true, cwd = path },
+        cb
+      )
     end,
     function(cb)
       if current_config.show_ignored then
-        system({ "git", "ls-tree", "HEAD", ".", "--name-only" }, { text = true, cwd = path }, cb)
+        -- quotepath=false - don't escape UTF-8 paths.
+        system(
+          { "git", "-c", "core.quotepath=false", "ls-tree", "HEAD", ".", "--name-only" },
+          { text = true, cwd = path },
+          cb
+        )
       else
         cb({ code = 0, stdout = "" })
       end
