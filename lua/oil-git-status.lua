@@ -140,7 +140,7 @@ end
 
 local function load_git_status(buffer, callback)
   local oil_url = vim.api.nvim_buf_get_name(buffer)
-  if not oil_url:match("^oil:") then
+  if not oil_url:match("^oil:%a*") then
       return
   end
   local file_url = oil_url:gsub("^oil", "file")
