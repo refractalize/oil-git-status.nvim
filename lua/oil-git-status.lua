@@ -145,6 +145,7 @@ local function load_git_status(buffer, callback)
     file_url = file_url:gsub("file:///([A-Za-z])/", "file:///%1:/")
   end
   local path = vim.uri_to_fname(file_url)
+  if vim.fn.isdirectory(path) == 0 then return end
   concurrent({
     function(cb)
       -- quotepath=false - don't escape UTF-8 paths.
