@@ -219,7 +219,7 @@ local function setup(config)
   validate_oil_config()
 
   vim.api.nvim_create_autocmd({ "FileType" }, {
-    pattern = { "oil:" },
+    pattern = { "oil" },
 
     callback = function()
       local buffer = vim.api.nvim_get_current_buf()
