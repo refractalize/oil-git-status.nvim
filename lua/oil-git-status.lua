@@ -234,10 +234,28 @@ local function refresh_buffer(buffer)
     return
   end
 
+  local current_status = nil
+
   load_git_status(buffer, function(status)
+    current_status = status
     add_status_extmarks(buffer, status)
     dirty_buffers[buffer] = nil
   end)
+
+  if vim.b[buffer].oil_git_status_started then
+    return
+  end
+
+  vim.b[buffer].oil_git_status_started = true
+
+  vim.api.nvim_create_autocmd({ "TextChanged" }, {
+    buffer = buffer,
+    callback = function()
+      if current_status then
+        add_status_extmarks(buffer, current_status)
+      end
+    end,
+  })
 end
 
 --- @param config {show_ignored: boolean}
