@@ -1,6 +1,7 @@
 local oil = require("oil")
 local namespace = vim.api.nvim_create_namespace("oil-git-status")
 local system = require("oil-git-status.system").system
+local dirty_buffers = {}
 
 local default_config = {
   show_ignored = true,
@@ -226,48 +227,48 @@ local function is_valid_oil_buffer(buffer)
   return oil_url:find("^oil:") ~= nil
 end
 
+--- @param buffer integer
+--- Refreshes the git status for the given oil buffer.
+local function refresh_buffer(buffer)
+  if not is_valid_oil_buffer(buffer) then
+    return
+  end
+
+  load_git_status(buffer, function(status)
+    add_status_extmarks(buffer, status)
+    dirty_buffers[buffer] = nil
+  end)
+end
+
 --- @param config {show_ignored: boolean}
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
 
   validate_oil_config()
 
-  local modified_buffers = {}
-
   vim.api.nvim_create_autocmd({ "BufWritePost" }, {
     pattern = "oil:*",
     callback = function(args)
       local buffer = args.buf
 
-      modified_buffers[buffer] = true
+      dirty_buffers[buffer] = true
     end,
   })
-
-  local function update_buffer_git_status(buffer)
-    if not is_valid_oil_buffer(buffer) then
-      return
-    end
-
-    load_git_status(buffer, function(status)
-      add_status_extmarks(buffer, status)
-      modified_buffers[buffer] = nil
-    end)
-  end
 
   vim.api.nvim_create_autocmd("User", {
     pattern = "OilEnter",
     callback = function(args)
       local buffer = args.data.buf
 
-      update_buffer_git_status(buffer)
+      refresh_buffer(buffer)
     end,
   })
 
   vim.api.nvim_create_autocmd("User", {
     pattern = "OilMutationComplete",
     callback = function(args)
-      for buffer, _ in pairs(modified_buffers) do
-        update_buffer_git_status(buffer)
+      for buffer, _ in pairs(dirty_buffers) do
+        refresh_buffer(buffer)
       end
     end,
   })
@@ -286,5 +287,6 @@ end
 
 return {
   setup = setup,
+  refresh_buffer = refresh_buffer,
   highlight_groups = highlight_groups,
 }

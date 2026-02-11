@@ -80,7 +80,9 @@ require('oil-git-status').setup({
 })
 ```
 
-## Highlight Groups
+## API
+
+### Highlight Groups
 
 The following highlight groups are defined:
 
@@ -107,4 +109,11 @@ for _, hl_group in pairs(require("oil-git-status").highlight_groups) do
     vim.api.nvim_set_hl(0, hl_group.hl_group, { fg = "#00ff00" })
   end
 end
+```
+
+### Refresh Oil Buffer Git Status
+
+```lua
+local oil_git_status = require("oil-git-status")
+oil_git_status.refresh_buffer(bufnr)
 ```
