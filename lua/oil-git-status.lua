@@ -50,21 +50,25 @@ local function parse_git_status(git_status_stdout, git_ls_tree_stdout)
   local status_lines = vim.split(git_status_stdout, "\n")
   local status = {}
   for _, line in ipairs(status_lines) do
-    local index_status_code = line:sub(1, 1)
-    local working_status_code = line:sub(2, 2)
-    local filename = unquote_git_file_name(line:sub(4))
+    if line ~= "" then
+      local index_status_code = line:sub(1, 1)
+      local working_status_code = line:sub(2, 2)
+      local filename = unquote_git_file_name(line:sub(4))
 
-    if vim.endswith(filename, "/") then
-      filename = filename:sub(1, -2)
+      if vim.endswith(filename, "/") then
+        filename = filename:sub(1, -2)
+      end
+
+      set_filename_status_code(filename, index_status_code, working_status_code, status)
     end
-
-    set_filename_status_code(filename, index_status_code, working_status_code, status)
   end
 
   for _, filename in ipairs(vim.split(git_ls_tree_stdout, "\n")) do
-    filename = unquote_git_file_name(filename)
-    if not status[filename] then
-      status[filename] = { index = " ", working_tree = " " }
+    if filename ~= "" then
+      filename = unquote_git_file_name(filename)
+      if not status[filename] then
+        status[filename] = { index = " ", working_tree = " " }
+      end
     end
   end
 
@@ -100,7 +104,7 @@ local function add_status_extmarks(buffer, status)
   if status then
     for n = 1, vim.api.nvim_buf_line_count(buffer) do
       local entry = oil.get_entry_on_line(buffer, n)
-      if entry and entry.name ~= '..' then
+      if entry and entry.name ~= ".." then
         local name = entry.name
 
         local status_codes = status[name] or (current_config.show_ignored and { index = "!", working_tree = "!" })
@@ -138,13 +142,18 @@ local function concurrent(fns, callback)
   end
 end
 
-local function load_git_status(buffer, callback)
+local function get_oil_buffer_path(buffer)
   local oil_url = vim.api.nvim_buf_get_name(buffer)
   local file_url = oil_url:gsub("^oil", "file")
   if vim.fn.has("win32") == 1 then
     file_url = file_url:gsub("file:///([A-Za-z])/", "file:///%1:/")
   end
-  local path = vim.uri_to_fname(file_url)
+  return vim.uri_to_fname(file_url)
+end
+
+local function load_git_status(buffer, callback)
+  local path = get_oil_buffer_path(buffer)
+
   concurrent({
     function(cb)
       -- quotepath=false - don't escape UTF-8 paths.
@@ -212,51 +221,54 @@ end
 --- @type table<string, {hl_group: string, index: boolean, status_code: string}>
 local highlight_groups = generate_highlight_groups()
 
+local function is_valid_oil_buffer(buffer)
+  local oil_url = vim.api.nvim_buf_get_name(buffer)
+  return oil_url:find("^oil:") ~= nil
+end
+
 --- @param config {show_ignored: boolean}
 local function setup(config)
   current_config = vim.tbl_extend("force", default_config, config or {})
 
   validate_oil_config()
 
-  vim.api.nvim_create_autocmd({ "FileType" }, {
-    pattern = { "oil" },
+  local modified_buffers = {}
 
-    callback = function()
-      local buffer = vim.api.nvim_get_current_buf()
-      local current_status = nil
+  vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+    pattern = "oil:*",
+    callback = function(args)
+      local buffer = args.buf
 
-      -- Ignore ssh and trash buffers
-      local oil_url = vim.api.nvim_buf_get_name(buffer)
-      if nil == oil_url:find("^oil:") then
-          return
+      modified_buffers[buffer] = true
+    end,
+  })
+
+  local function update_buffer_git_status(buffer)
+    if not is_valid_oil_buffer(buffer) then
+      return
+    end
+
+    load_git_status(buffer, function(status)
+      add_status_extmarks(buffer, status)
+      modified_buffers[buffer] = nil
+    end)
+  end
+
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "OilEnter",
+    callback = function(args)
+      local buffer = args.data.buf
+
+      update_buffer_git_status(buffer)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "OilMutationComplete",
+    callback = function(args)
+      for buffer, _ in pairs(modified_buffers) do
+        update_buffer_git_status(buffer)
       end
-
-      if vim.b[buffer].oil_git_status_started then
-        return
-      end
-
-      vim.b[buffer].oil_git_status_started = true
-
-      vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-        buffer = buffer,
-
-        callback = function()
-          load_git_status(buffer, function(status)
-            current_status = status
-            add_status_extmarks(buffer, current_status)
-          end)
-        end,
-      })
-
-      vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
-        buffer = buffer,
-
-        callback = function()
-          if current_status then
-            add_status_extmarks(buffer, current_status)
-          end
-        end,
-      })
     end,
   })
 
