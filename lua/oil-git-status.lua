@@ -225,6 +225,12 @@ local function setup(config)
       local buffer = vim.api.nvim_get_current_buf()
       local current_status = nil
 
+      -- Ignore ssh and trash buffers
+      local oil_url = vim.api.nvim_buf_get_name(buffer)
+      if nil == oil_url:find("^oil:") then
+          return
+      end
+
       if vim.b[buffer].oil_git_status_started then
         return
       end
